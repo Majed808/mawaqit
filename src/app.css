@@ -82,6 +82,8 @@ button{cursor:pointer}
 .est{color:var(--warn);font-size:12px}
 
 .foot{color:var(--faint);font-size:12px;text-align:center;margin:16px 8px 0;line-height:1.7}
+.foot-author{display:inline-block;margin-top:6px;color:var(--muted)}
+.foot a{color:inherit}
 .alert{margin:12px 2px 0;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--warn) 14%,var(--surface));color:var(--text);font-size:13px;line-height:1.6}
 
 /* sheets */

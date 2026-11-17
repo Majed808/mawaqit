@@ -156,7 +156,8 @@ function renderFoot(v) {
   const parts = [LK === 'ar' ? 'المصدر: منصة منهاج — رابطة العالم الإسلامي' : 'Source: Manhaj platform — Muslim World League', L.method[v.today.method]];
   if (v.today.ramadan) parts.push(LK === 'ar' ? 'العشاء: 120 دقيقة بعد المغرب (رمضان)' : 'Isha: 120 min after Maghrib (Ramadan)');
   if (l.tz !== deviceTz()) parts.push(L.tzOther(l.tz));
-  $('foot').innerHTML = parts.map(esc).join('<br>');
+  const by = `<span class="foot-author">${esc(LK === 'ar' ? AUTHOR.ar : AUTHOR.en)}${AUTHOR.email ? ` | <a href="mailto:${esc(AUTHOR.email)}" dir="ltr">${esc(AUTHOR.email)}</a>` : ''}</span>`;
+  $('foot').innerHTML = parts.map(esc).join('<br>') + '<br>' + by;
   const msgs = [];
   if (l.mode === 'auto' && Date.now() - l.ts > 30 * DAY) msgs.push(`${L.stale} — ${L.lastUpdate}: ${fmtDate(new Date(l.ts))}`);
   if ((v.today.times.estimated || []).length) msgs.push(`≈ ${L.estimated}`);
