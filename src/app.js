@@ -37,7 +37,7 @@ function applyLang() {
 // ---------- formatting ----------
 const loc = () => S.loc;
 const tz = () => (S.loc && S.loc.tz) || deviceTz();
-const fmtTime = d => d ? new Intl.DateTimeFormat(`${L.locale}-u-nu-latn`, { timeZone: tz(), hour: 'numeric', minute: '2-digit' }).format(d) : '—';
+const fmtTime = d => d ? new Intl.DateTimeFormat(`${L.locale}-u-nu-latn`, { timeZone: tz(), hour: 'numeric', minute: '2-digit', hour12: true }).format(d) : '—';
 const fmtGreg = d => new Intl.DateTimeFormat(`${L.locale}-u-ca-gregory-nu-latn`, { timeZone: tz(), weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(d);
 const fmtHijri = d => { try { return new Intl.DateTimeFormat(`${L.locale}-u-ca-islamic-umalqura-nu-latn`, { timeZone: tz(), day: 'numeric', month: 'long', year: 'numeric' }).format(d); } catch { return ''; } };
 const fmtDate = d => new Intl.DateTimeFormat(`${L.locale}-u-ca-gregory-nu-latn`, { dateStyle: 'medium', timeStyle: 'short' }).format(d);
