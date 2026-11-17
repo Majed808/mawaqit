@@ -1,0 +1,17 @@
+{
+  "name": "mawaqit",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Prayer & iqama reminder PWA following the MWL Manhaj platform times",
+  "type": "module",
+  "scripts": {
+    "dev": "node tools/serve.mjs . 5173",
+    "test": "node tools/test.mjs",
+    "icons": "node tools/icons.mjs",
+    "build": "node tools/test.mjs && node tools/build.mjs",
+    "preview": "node tools/serve.mjs dist 5174"
+  },
+  "devDependencies": {
+    "esbuild": "0.24.2"
+  }
+}

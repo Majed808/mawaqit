@@ -1,0 +1,84 @@
+// Translations. To add a language: copy the `en` block, translate, and add it to LANGS.
+const ar = {
+  dir: 'rtl', locale: 'ar-SA',
+  appName: 'مواقيت', appTagline: 'تذكير بمواقيت الصلاة والإقامة',
+  prayers: { fajr: 'الفجر', sunrise: 'الشروق', dhuhr: 'الظهر', jumuah: 'الجمعة', asr: 'العصر', maghrib: 'المغرب', isha: 'العشاء' },
+  next: 'الصلاة القادمة', remaining: 'المتبقي', iqama: 'الإقامة', after: 'بعد', min: 'د',
+  settings: 'الإعدادات', about: 'عن الأداة', back: 'رجوع', install: 'تثبيت', share: 'مشاركة',
+  notifOn: 'التنبيهات مفعّلة', notifOff: 'التنبيهات متوقفة', notifEnable: 'تفعيل التنبيهات', notifBlocked: 'التنبيهات محظورة من المتصفح',
+  notifUnsupported: 'المتصفح لا يدعم الإشعارات', notifInApp: 'تعمل والتطبيق مفتوح أو في الخلفية',
+  // settings
+  sLocation: 'الموقع', sAuto: 'تلقائي (GPS)', sManual: 'يدوي', sDetect: 'تحديد موقعي الآن', sSearchCity: 'ابحث عن مدينة…',
+  sCoords: 'إحداثيات مخصصة', sLat: 'خط العرض', sLng: 'خط الطول', sApply: 'اعتماد', sTz: 'المنطقة الزمنية',
+  sLocWhy: 'يُستخدم الموقع لحساب المواقيت على جهازك فقط، ولا يُرسل إلى أي خادم.',
+  sLanguage: 'اللغة', sLangAuto: 'لغة الجهاز',
+  sNotifications: 'الإشعارات', sAdhanNotif: 'إشعار دخول الوقت (الأذان)', sAfter: 'إشعار بعد الأذان', sOff: 'إيقاف',
+  sBefore: 'تذكير قبل الأذان', sIqama: 'تذكير الإقامة', sPerPrayer: 'لكل صلاة', sPrayerCol: 'الصلاة', sAdhanCol: 'الأذان',
+  sIqamaCol: 'الإقامة', sIqamaAfter: 'بعد الأذان بـ',
+  sNotifWhy: 'نطلب إذن الإشعارات لتنبيهك بدخول وقت الصلاة والإقامة فقط.',
+  sSound: 'الصوت', sSoundOn: 'تشغيل نغمة التنبيه', sVolume: 'مستوى الصوت', sTest: 'تجربة النغمة', sTestNotif: 'إشعار تجريبي',
+  sAdvanced: 'متقدم', sRamadan: 'العشاء في رمضان بعد المغرب بساعتين (تقويم أم القرى)',
+  sRamadanNote: 'غير مفعّل افتراضيًا لمطابقة منصة منهاج؛ فعّله إن كان مسجدك يؤخر العشاء في رمضان.',
+  sReset: 'استعادة الإعدادات الافتراضية', sResetLoc: 'إعادة ضبط الموقع والجدولة', sConfirmReset: 'هل تريد استعادة الإعدادات الافتراضية؟',
+  minutes: n => n === 1 ? 'دقيقة واحدة' : n === 2 ? 'دقيقتان' : n <= 10 ? `${n} دقائق` : `${n} دقيقة`,
+  // notifications
+  nAdhanTitle: p => `حان وقت صلاة ${p}`, nAdhanBody: (p, t, c) => `أذان ${p} ${t}${c ? ' — ' + c : ''}`,
+  nAfter: (p, n) => `مضى على وقت أذان صلاة ${p} ${n}`,
+  nBefore: (p, n) => `بقي على أذان صلاة ${p} ${n}`,
+  nIqamaTitle: p => `حان وقت إقامة صلاة ${p}`, nIqamaBody: (p, n) => `مضى على الأذان ${n}`,
+  nTest: 'هذا إشعار تجريبي من مواقيت', nTzChanged: 'تغيّرت المنطقة الزمنية، وتم تحديث المواقيت',
+  // states
+  locating: 'جارٍ تحديد الموقع…', locFail: 'تعذّر تحديد الموقع. اختر مدينتك يدويًا.', locDenied: 'تم رفض إذن الموقع. اختر مدينتك يدويًا.',
+  noLocation: 'اختر موقعك لعرض المواقيت', chooseCity: 'اختيار المدينة', myLocation: 'موقعي الحالي', near: 'قرب',
+  lastUpdate: 'آخر تحديث للموقع', stale: 'لم يُحدَّث الموقع منذ مدة طويلة', estimated: 'وقت تقديري (خط عرض مرتفع)',
+  updateReady: 'يتوفر تحديث جديد', updateNow: 'تحديث', offline: 'تعمل دون اتصال',
+  method: { UmmAlQura: 'أم القرى (الفجر 18.5°، العشاء بعد المغرب 90 دقيقة)', MWL: 'رابطة العالم الإسلامي (الفجر 18°، العشاء 17°)' },
+  tzOther: z => `المواقيت بتوقيت ${z}`,
+  iosInstall: 'للتثبيت على iPhone: اضغط زر المشاركة ثم «إضافة إلى الشاشة الرئيسية».',
+  copied: 'تم نسخ الرابط',
+};
+
+const en = {
+  dir: 'ltr', locale: 'en-GB',
+  appName: 'Mawaqit', appTagline: 'Prayer & Iqama reminders',
+  prayers: { fajr: 'Fajr', sunrise: 'Sunrise', dhuhr: 'Dhuhr', jumuah: "Jumu'ah", asr: 'Asr', maghrib: 'Maghrib', isha: 'Isha' },
+  next: 'Next prayer', remaining: 'Remaining', iqama: 'Iqama', after: 'after', min: 'min',
+  settings: 'Settings', about: 'About', back: 'Back', install: 'Install', share: 'Share',
+  notifOn: 'Notifications on', notifOff: 'Notifications off', notifEnable: 'Enable notifications', notifBlocked: 'Notifications blocked by browser',
+  notifUnsupported: 'Notifications not supported', notifInApp: 'Works while the app is open or in background',
+  sLocation: 'Location', sAuto: 'Automatic (GPS)', sManual: 'Manual', sDetect: 'Detect my location', sSearchCity: 'Search city…',
+  sCoords: 'Custom coordinates', sLat: 'Latitude', sLng: 'Longitude', sApply: 'Apply', sTz: 'Time zone',
+  sLocWhy: 'Your location is only used on this device to calculate times. It is never sent to a server.',
+  sLanguage: 'Language', sLangAuto: 'Device language',
+  sNotifications: 'Notifications', sAdhanNotif: 'Prayer time (Adhan) alert', sAfter: 'Reminder after Adhan', sOff: 'Off',
+  sBefore: 'Reminder before Adhan', sIqama: 'Iqama reminder', sPerPrayer: 'Per prayer', sPrayerCol: 'Prayer', sAdhanCol: 'Adhan',
+  sIqamaCol: 'Iqama', sIqamaAfter: 'after Adhan',
+  sNotifWhy: 'Notification permission is only used to alert you at prayer and iqama times.',
+  sSound: 'Sound', sSoundOn: 'Play alert tone', sVolume: 'Volume', sTest: 'Test tone', sTestNotif: 'Test notification',
+  sAdvanced: 'Advanced', sRamadan: 'Ramadan: Isha 2 hours after Maghrib (Umm al-Qura calendar)',
+  sRamadanNote: 'Off by default to match the Manhaj platform; enable it if your mosque delays Isha in Ramadan.',
+  sReset: 'Restore default settings', sResetLoc: 'Reset location & schedule', sConfirmReset: 'Restore default settings?',
+  minutes: n => n === 1 ? '1 minute' : `${n} minutes`,
+  nAdhanTitle: p => `It's time for ${p}`, nAdhanBody: (p, t, c) => `${p} Adhan ${t}${c ? ' — ' + c : ''}`,
+  nAfter: (p, n) => `${n} have passed since the ${p} Adhan`,
+  nBefore: (p, n) => `${n} until the ${p} Adhan`,
+  nIqamaTitle: p => `${p} Iqama time`, nIqamaBody: (p, n) => `${n} since the Adhan`,
+  nTest: 'This is a test notification from Mawaqit', nTzChanged: 'Time zone changed — prayer times updated',
+  locating: 'Locating…', locFail: 'Could not get your location. Please choose your city.', locDenied: 'Location permission denied. Please choose your city.',
+  noLocation: 'Choose your location to see prayer times', chooseCity: 'Choose city', myLocation: 'My location', near: 'near',
+  lastUpdate: 'Location updated', stale: 'Location has not been updated for a long time', estimated: 'Estimated (high latitude)',
+  updateReady: 'A new version is available', updateNow: 'Update', offline: 'Works offline',
+  method: { UmmAlQura: 'Umm al-Qura (Fajr 18.5°, Isha 90 min after Maghrib)', MWL: 'Muslim World League (Fajr 18°, Isha 17°)' },
+  tzOther: z => `Times shown in ${z}`,
+  iosInstall: 'To install on iPhone: tap Share, then “Add to Home Screen”.',
+  copied: 'Link copied',
+};
+
+export const LANGS = { ar, en };
+export function detectLang() {
+  for (const l of navigator.languages || [navigator.language || 'en']) {
+    const k = String(l).slice(0, 2).toLowerCase();
+    if (LANGS[k]) return k;
+  }
+  return 'en';
+}
