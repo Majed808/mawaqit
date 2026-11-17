@@ -39,7 +39,7 @@ const ar = {
 };
 
 const en = {
-  dir: 'ltr', locale: 'en-GB',
+  dir: 'ltr', locale: 'en-GB', am: 'AM', pm: 'PM',
   appName: 'Mawaqit', appTagline: 'Prayer & Iqama reminders',
   prayers: { fajr: 'Fajr', sunrise: 'Sunrise', dhuhr: 'Dhuhr', jumuah: "Jumu'ah", asr: 'Asr', maghrib: 'Maghrib', isha: 'Isha' },
   next: 'Next prayer', remaining: 'Remaining', iqama: 'Iqama', after: 'after', min: 'min',
