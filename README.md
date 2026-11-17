@@ -29,6 +29,10 @@ npm run preview    # يعرض dist/ على http://localhost:5174
 ```
 
 ## النشر والمشاركة
+**الرابط المباشر:** https://majed808.github.io/mawaqit/
+
+لنشر أي تحديث: `npm run deploy` (يختبر ويبني ثم يدفع `dist/` إلى فرع `gh-pages`). تُحفظ إعدادات المستخدمين عند التحديث.
+
 انسخ محتويات `dist/` إلى أي استضافة ثابتة تعمل بـ HTTPS (مطلوب للـ Service Worker والإشعارات):
 GitHub Pages أو Netlify أو Cloudflare Pages. الرابط الناتج هو رابط التثبيت والمشاركة.
 

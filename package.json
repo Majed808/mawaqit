@@ -9,7 +9,8 @@
     "test": "node tools/test.mjs",
     "icons": "node tools/icons.mjs",
     "build": "node tools/test.mjs && node tools/build.mjs",
-    "preview": "node tools/serve.mjs dist 5174"
+    "preview": "node tools/serve.mjs dist 5174",
+    "deploy": "node tools/deploy.mjs"
   },
   "devDependencies": {
     "esbuild": "0.24.2"
