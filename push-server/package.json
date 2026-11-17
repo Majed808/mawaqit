@@ -1,0 +1,22 @@
+{
+  "name": "mawaqit-push",
+  "version": "1.0.0",
+  "description": "",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "node test/crypto.test.mjs",
+    "dev": "wrangler dev --test-scheduled",
+    "deploy": "wrangler deploy"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "http_ece": "^1.2.0",
+    "wrangler": "^4.164.0"
+  },
+  "private": true
+}

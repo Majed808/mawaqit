@@ -26,11 +26,11 @@ export function dayTimes(loc, s, ymd) {
   return { ymd, key: keyOf(ymd), times: t, method, friday: dow === 5, ramadan };
 }
 
-export function buildEvents(loc, s, now = Date.now()) {
+export function buildEvents(loc, s, now = Date.now(), days = DAYS) {
   if (!loc) return [];
   const start = addDays(ymdIn(loc.tz, new Date(now)), -1);
   const ev = [];
-  for (let i = 0; i <= DAYS + 1; i++) {   // yesterday (late events) + today + 7 days
+  for (let i = 0; i <= days + 1; i++) {   // yesterday (late events) + today + N days
     const day = dayTimes(loc, s, addDays(start, i));
     for (const p of PRAYERS) {
       const at = day.times[p];

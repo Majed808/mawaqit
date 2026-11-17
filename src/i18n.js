@@ -36,6 +36,15 @@ const ar = {
   tzOther: z => `المواقيت بتوقيت ${z}`,
   iosInstall: 'للتثبيت على iPhone: اضغط زر المشاركة ثم «إضافة إلى الشاشة الرئيسية».',
   copied: 'تم نسخ الرابط',
+  notifBg: 'تصل حتى والتطبيق مغلق',
+  sBg: 'التنبيهات والتطبيق مغلق',
+  sBgWhy: 'لإيصال التنبيهات في وقتها والتطبيق مغلق تُرسل أوقاتها ونصوصها فقط — دون موقعك — إلى خادم التنبيهات الخاص بالأداة.',
+  sBgOk: 'مفعّلة لـ 30 يومًا وتتجدد عند فتح التطبيق — آخر مزامنة:',
+  sBgErr: 'تعذّر الاتصال بخادم التنبيهات؛ تعمل التنبيهات حاليًا والتطبيق مفتوح فقط، وسيُعاد المحاولة تلقائيًا.',
+  sBgPending: 'جارٍ التفعيل…',
+  sBgIos: 'على iPhone وiPad: ثبّت الأداة على الشاشة الرئيسية ثم افتحها من أيقونتها لتفعيل هذه الميزة.',
+  sBgUnsupported: 'هذا المتصفح لا يدعم إيصال التنبيهات والتطبيق مغلق.',
+  sBgUnavailable: 'خادم التنبيهات غير مهيأ في هذه النسخة.',
 };
 
 const en = {
@@ -72,6 +81,15 @@ const en = {
   tzOther: z => `Times shown in ${z}`,
   iosInstall: 'To install on iPhone: tap Share, then “Add to Home Screen”.',
   copied: 'Link copied',
+  notifBg: 'Delivered even when the app is closed',
+  sBg: 'Alerts while the app is closed',
+  sBgWhy: 'To deliver alerts on time while the app is closed, only their times and texts — never your location — are sent to the app’s notification server.',
+  sBgOk: 'Active for 30 days, renewed whenever you open the app — last sync:',
+  sBgErr: 'Could not reach the notification server; alerts currently work only while the app is open. Retrying automatically.',
+  sBgPending: 'Enabling…',
+  sBgIos: 'On iPhone/iPad: add the app to your Home Screen, then open it from its icon to enable this.',
+  sBgUnsupported: 'This browser cannot deliver alerts while the app is closed.',
+  sBgUnavailable: 'The notification server is not configured in this build.',
 };
 
 export const LANGS = { ar, en };

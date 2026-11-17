@@ -6,6 +6,7 @@ export const DEFAULTS = Object.freeze({
   lang: 'auto',
   loc: null,              // {mode:'auto'|'manual', lat, lng, tz, name:{ar,en}|null, ts}
   notify: true,           // master switch (still needs browser permission)
+  bg: true,               // deliver via the push relay so alerts arrive while the app is closed
   adhan: { fajr: true, dhuhr: true, asr: true, maghrib: true, isha: true },
   afterMin: 5,            // reminder N minutes after adhan (0 = off)
   beforeMin: 0,           // reminder N minutes before adhan (0 = off)

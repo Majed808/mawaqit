@@ -2,7 +2,7 @@
 // VERSION and ASSETS are rewritten by tools/build.mjs for the production build.
 const VERSION = 'dev-1';
 const ASSETS = ['./', 'index.html', 'manifest.webmanifest', 'src/app.css', 'src/app.js', 'src/prayer.js', 'src/i18n.js',
-  'src/cities.js', 'src/store.js', 'src/scheduler.js', 'src/sound.js', 'src/author.js',
+  'src/cities.js', 'src/store.js', 'src/scheduler.js', 'src/sound.js', 'src/author.js', 'src/config.js', 'src/push.js',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/badge-96.png', 'icons/apple-touch-icon.png'];
 const CACHE = 'mawaqit-' + VERSION;
 
@@ -40,6 +40,21 @@ self.addEventListener('fetch', e => {
     } catch {
       return new Response('', { status: 504 });
     }
+  })());
+});
+
+// Alerts sent by the push relay — shown even when the app is closed.
+self.addEventListener('push', e => {
+  let d;
+  try { d = e.data.json(); } catch { d = { title: 'مواقيت', body: e.data ? e.data.text() : '' }; }
+  const rtl = /[؀-ۿ]/.test(d.title || '');
+  e.waitUntil((async () => {
+    await self.registration.showNotification(d.title || 'مواقيت', {
+      body: d.body || '', tag: d.tag || undefined, timestamp: d.at || Date.now(), silent: !!d.silent,
+      dir: rtl ? 'rtl' : 'ltr', lang: rtl ? 'ar' : 'en',
+      icon: 'icons/icon-192.png', badge: 'icons/badge-96.png', data: { url: './' },
+    });
+    for (const c of await self.clients.matchAll({ type: 'window' })) c.postMessage({ type: 'mq-push', title: d.title, tag: d.tag });
   })());
 });
 

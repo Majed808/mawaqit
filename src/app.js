@@ -4,6 +4,7 @@ import { CITIES, nearestCity, distanceKm } from './cities.js';
 import { dayTimes, ymdIn, buildEvents, Runner, clearLedger } from './scheduler.js';
 import { chime, unlockAudio } from './sound.js';
 import { AUTHOR } from './author.js';
+import { pushConfigured, pushSupported, pushState, pushActive, syncPush, stopPush } from './push.js';
 
 const VERSION = '1.0.0';
 const $ = id => document.getElementById(id);
@@ -156,7 +157,7 @@ function renderFoot(v) {
   const parts = [LK === 'ar' ? 'المصدر: منصة منهاج — رابطة العالم الإسلامي' : 'Source: Manhaj platform — Muslim World League', L.method[v.today.method]];
   if (v.today.ramadan) parts.push(LK === 'ar' ? 'العشاء: 120 دقيقة بعد المغرب (رمضان)' : 'Isha: 120 min after Maghrib (Ramadan)');
   if (l.tz !== deviceTz()) parts.push(L.tzOther(l.tz));
-  const by = `<span class="foot-author">${esc(LK === 'ar' ? AUTHOR.ar : AUTHOR.en)}${AUTHOR.email ? ` | <a href="mailto:${esc(AUTHOR.email)}" dir="ltr">${esc(AUTHOR.email)}</a>` : ''}</span>`;
+  const by = `<span class="foot-author" dir="ltr">${esc(AUTHOR.en)}${AUTHOR.email ? ` | <a href="mailto:${esc(AUTHOR.email)}" dir="ltr">${esc(AUTHOR.email)}</a>` : ''}</span>`;
   $('foot').innerHTML = parts.map(esc).join('<br>') + '<br>' + by;
   const msgs = [];
   if (l.mode === 'auto' && Date.now() - l.ts > 30 * DAY) msgs.push(`${L.stale} — ${L.lastUpdate}: ${fmtDate(new Date(l.ts))}`);
@@ -174,7 +175,7 @@ function notifState() {
 function renderStatus() {
   const st = notifState(), b = $('statusBtn');
   b.className = 'status ' + ({ on: 'on', off: 'off', denied: 'bad', unsupported: 'bad' })[st];
-  $('statusText').textContent = ({ on: `${L.notifOn} · ${L.notifInApp}`, off: L.notifEnable, denied: L.notifBlocked, unsupported: L.notifUnsupported })[st];
+  $('statusText').textContent = num(({ on: `${L.notifOn} · ${S.bg && pushActive() ? L.notifBg : L.notifInApp}`, off: L.notifEnable, denied: L.notifBlocked, unsupported: L.notifUnsupported })[st]);
 }
 
 // ---------- notifications ----------
@@ -186,8 +187,45 @@ async function enableNotifications() {
   S.notify = perm === 'granted';
   persist();
   if (perm === 'denied') toast(L.notifBlocked);
+  if (S.notify) syncNow(true);
   return S.notify;
 }
+
+// ---------- background delivery (Web Push relay) ----------
+const pushHash = () => JSON.stringify([S.loc && [S.loc.lat, S.loc.lng, S.loc.tz], S.adhan, S.afterMin, S.beforeMin, S.iqama, S.ramadan, S.sound, LK, PRAYERS.length]);
+let pushTimer, pushBusy = false;
+function schedulePush(force = false) { clearTimeout(pushTimer); pushTimer = setTimeout(() => syncNow(force), 1200); }
+function bgMode() {
+  if (!pushConfigured()) return 'off';
+  if (!pushSupported()) return isIOS() && !isStandalone() ? 'ios' : 'unsupported';
+  return 'ok';
+}
+async function syncNow(force) {
+  if (pushBusy || bgMode() !== 'ok' || notifState() !== 'on' || !S.bg || !S.loc) return;
+  pushBusy = true;
+  try {
+    const now = Date.now();
+    const events = buildEvents(S.loc, S, now, 30).filter(e => e.at > now - 30e3).map(e => {
+      const t = eventText(e, false);
+      return { at: e.at, tag: e.id, title: num(t.title), body: num(t.body), silent: !S.sound };
+    });
+    await syncPush(events, LK, pushHash(), force);
+  } finally { pushBusy = false; }
+  renderStatus();
+  renderPushLine();
+}
+function pushLineText() {
+  const m = bgMode();
+  if (m === 'ios') return L.sBgIos;
+  if (m === 'unsupported') return L.sBgUnsupported;
+  if (m === 'off') return L.sBgUnavailable;
+  if (!S.bg || notifState() !== 'on') return L.sBgWhy;
+  const st = pushState();
+  if (st.ok) return `${L.sBgOk} ${fmtDate(new Date(st.at))}`;
+  if (st.err) return L.sBgErr;
+  return L.sBgPending;
+}
+function renderPushLine() { const el = $('pushLine'); if (el) el.textContent = num(pushLineText()); }
 
 async function show(title, body, tag, at) {
   title = num(title); body = num(body);
@@ -204,14 +242,20 @@ async function show(title, body, tag, at) {
   (window.__mqLog = window.__mqLog || []).push({ title, body, tag, at: Date.now() });
 }
 
+// Notification texts. withPlace=false for the relay (the server never learns the city).
+function eventText(e, withPlace = true) {
+  const p = pname(e.prayer, e.friday), n = L.minutes(e.n), place = withPlace ? placeName() : '';
+  const time = fmtTime(new Date(e.prayerAt));
+  if (e.type === 'adhan') return { title: L.nAdhanTitle(p), body: L.nAdhanBody(p, time, place) };
+  if (e.type === 'after') return { title: L.nAfter(p, n), body: place || `${p} ${time}` };
+  if (e.type === 'before') return { title: L.nBefore(p, n), body: `${p} ${time}` };
+  return { title: L.nIqamaTitle(p), body: L.nIqamaBody(p, n) };
+}
 function onFire(e) {
   if (notifState() !== 'on') return;
-  const p = pname(e.prayer, e.friday), n = L.minutes(e.n), place = placeName();
-  const time = fmtTime(new Date(e.prayerAt));
-  if (e.type === 'adhan') show(L.nAdhanTitle(p), L.nAdhanBody(p, time, place), e.id, e.at);
-  else if (e.type === 'after') show(L.nAfter(p, n), place, e.id, e.at);
-  else if (e.type === 'before') show(L.nBefore(p, n), `${p} ${time}`, e.id, e.at);
-  else if (e.type === 'iqama') show(L.nIqamaTitle(p), L.nIqamaBody(p, n), e.id, e.at);
+  if (S.bg && pushActive()) return;          // the relay delivers it (works even when the app is closed)
+  const t = eventText(e);
+  show(t.title, t.body, e.id, e.at);
 }
 
 const runner = new Runner(onFire, () => {
@@ -223,7 +267,7 @@ const runner = new Runner(onFire, () => {
   const d = ymdIn(l.tz).d + l.tz;
   if (d !== lastDay) { lastDay = d; reschedule(); }       // day roll-over
 });
-function reschedule() { runner.setEvents(buildEvents(S.loc, S)); }
+function reschedule() { runner.setEvents(buildEvents(S.loc, S)); schedulePush(); }
 
 // ---------- location ----------
 function setLocation(l) { S.loc = l; locMode = l ? l.mode : locMode; lastListKey = ''; persist(); }
@@ -292,6 +336,7 @@ function renderSettings() {
 
   <div class="group"><h3>${L.sNotifications}</h3><div class="card">
     <div class="item"><label for="notifSw">${L.notifEnable}<div class="hint">${notifState() === 'denied' ? L.notifBlocked : L.sNotifWhy}</div></label>${sw('notify', notifState() === 'on', 'id="notifSw"')}</div>
+    <div class="item"><label for="bgSw">${L.sBg}<div class="hint" id="pushLine"></div></label>${sw('bg', S.bg && bgMode() === 'ok', `id="bgSw"${bgMode() === 'ok' ? '' : ' disabled'}`)}</div>
     <div class="item"><span class="lbl">${L.sAfter}</span>${sel('afterMin', [0, 1, 2, 3, 5, 10, 15, 20, 25, 30], S.afterMin, minsOff)}</div>
     <div class="item"><span class="lbl">${L.sBefore}</span>${sel('beforeMin', [0, 5, 10, 15, 20, 30, 45, 60], S.beforeMin, minsOff)}</div>
     <div class="pgrid">
@@ -316,6 +361,7 @@ function renderSettings() {
     </div>
   </div></div>`;
   if (manual) renderCities();
+  renderPushLine();
   arabize($('settingsBody'));
 }
 
@@ -337,8 +383,13 @@ async function onSettingsChange(e) {
   if (!k) return;
   const val = t.type === 'checkbox' ? t.checked : (k === 'lang' ? t.value : +t.value);
   if (k === 'notify') {
-    if (val) await enableNotifications(); else { S.notify = false; persist(); }
+    if (val) await enableNotifications(); else { S.notify = false; persist(); stopPush(); }
     renderSettings(); return;
+  }
+  if (k === 'bg') {
+    S.bg = val; save(S);
+    if (val) { renderPushLine(); await syncNow(true); } else { await stopPush(); renderPushLine(); renderStatus(); }
+    return;
   }
   setPath(S, k, val);
   if (k === 'lang') { applyLang(); persist(); renderSettings(); return; }
@@ -372,7 +423,7 @@ async function onAction(e) {
       if (notifState() === 'on' || await enableNotifications()) show(L.appName, L.nTest, 'test-' + Date.now());
       renderSettings(); break;
     case 'reset': if (confirm(L.sConfirmReset)) { S = resetSettings(S.loc); applyLang(); persist(); renderSettings(); } break;
-    case 'reset-loc': S.loc = null; locMode = 'manual'; clearLedger(); persist(); location.hash = ''; break;
+    case 'reset-loc': S.loc = null; locMode = 'manual'; clearLedger(); stopPush(); persist(); location.hash = ''; break;
     case 'install': doInstall(); break;
     case 'share': doShare(); break;
     case 'update': navigator.serviceWorker.getRegistration().then(r => r && r.waiting && r.waiting.postMessage('skipWaiting')); break;
@@ -385,8 +436,8 @@ function renderAbout() {
   const method = l ? L.method[dayTimes(l, S, ymdIn(l.tz)).method] : `${L.method.UmmAlQura} / ${L.method.MWL}`;
   const btns = `<div class="btns" style="padding:8px 0"><button class="btn" type="button" data-act="share"><svg class="ic"><use href="#i-share"/></svg>${L.share}</button>
     ${installEvt || (isIOS() && !isStandalone()) ? `<button class="btn ghost" type="button" data-act="install"><svg class="ic"><use href="#i-install"/></svg>${L.install}</button>` : ''}</div>`;
-  const aName = esc(LK === 'ar' ? AUTHOR.ar : AUTHOR.en);
-  const author = `<p class="author-line">${aName}${AUTHOR.email ? ` | <a href="mailto:${esc(AUTHOR.email)}" dir="ltr">${esc(AUTHOR.email)}</a>` : ''}</p>`;
+  const aName = esc(AUTHOR.en);
+  const author = `<p class="author-line"><span dir="ltr">${aName}${AUTHOR.email ? ` | <a href="mailto:${esc(AUTHOR.email)}">${esc(AUTHOR.email)}</a>` : ''}</span></p>`;
   $('aboutBody').innerHTML = LK === 'ar' ? `
   <p><b>مواقيت</b> أداة خفيفة ومستقلة للتذكير بمواقيت الصلاة والإقامة، تعمل على الجوال والكمبيوتر دون حساب، ودون إنترنت بعد التثبيت.</p>
   <h3>مصدر المواقيت وطريقة الحساب</h3>
@@ -398,14 +449,15 @@ function renderAbout() {
   <p class="muted">التحقق: طوبقت النتائج مع منصة منهاج في 24 حالة (مكة، الرياض، جدة، المدينة، الدمام، أبها، تبوك، و17 مدينة وحالة دولية) بتاريخ 17 نوفمبر 2026 دون أي فرق. الطريقة الحالية: ${esc(method)}.</p>
   <p class="muted">ملاحظة: منصة منهاج لا تعرض مواقيت الأيام القادمة، لذا لم يُتحقق بعدُ من سلوكها في رمضان؛ خيار «العشاء بعد المغرب بساعتين في رمضان» متاح في الإعدادات وغير مفعّل افتراضيًا. المواقيت المعلَّمة بـ ≈ تقديرية لخطوط العرض المرتفعة.</p>
   <h3>الإشعارات — ما يجب معرفته</h3>
-  <ul><li>تُجدول التنبيهات للأيام السبعة القادمة، ولا يُرسل أي تنبيه أكثر من مرة.</li>
-  <li><b>الكمبيوتر (Windows / macOS):</b> ثبّت الأداة من Chrome أو Edge، ويمكن تصغير نافذتها. ولتعمل بعد إعادة التشغيل فعّل «بدء التطبيق عند تسجيل الدخول» من إعدادات التطبيق في المتصفح.</li>
-  <li><b>Android:</b> تصل التنبيهات والتطبيق مفتوح أو في الخلفية. إذا أغلق النظام التطبيق كليًا فلا تستطيع تطبيقات الويب جدولة إشعار محلي — وهذا من قيود المتصفح.</li>
-  <li><b>iPhone / iPad (iOS 16.4+):</b> يلزم «الإضافة إلى الشاشة الرئيسية» أولًا. يوقف iOS تطبيقات الويب في الخلفية، فتصل التنبيهات بموثوقية والتطبيق مفتوح فقط.</li>
-  <li>عند فتح التطبيق بعد انقطاع يُرسل التنبيه الفائت إن لم يتأخر أكثر من 10 دقائق، وإلا يُتجاوز.</li>
-  <li>حين يكون التطبيق مخفيًا يُستخدم صوت إشعار النظام، فيُحترم وضع «عدم الإزعاج».</li></ul>
+  <ul><li>تصل التنبيهات عبر خدمة الإشعارات في جهازك (Web Push)، فتصل في وقتها حتى والتطبيق مغلق أو الجهاز مقفل.</li>
+  <li>تُجدول تنبيهات 30 يومًا وتتجدد كلما فتحت التطبيق، وإذا قاربت على الانتهاء يصلك تنبيه لفتحه. لا يُرسل أي تنبيه أكثر من مرة.</li>
+  <li><b>iPhone / iPad (iOS 16.4+):</b> أضف الأداة إلى الشاشة الرئيسية وافتحها من أيقونتها، ثم فعّل التنبيهات.</li>
+  <li><b>Windows / macOS:</b> تصل التنبيهات ما دام Chrome أو Edge يعمل، ولو كانت نافذة الأداة مغلقة. فعّل «متابعة تشغيل التطبيقات في الخلفية» من إعدادات المتصفح.</li>
+  <li><b>Android:</b> تصل والتطبيق مغلق؛ واستثناء المتصفح من «تحسين البطارية» يضمن دقة التوقيت.</li>
+  <li>دون اتصال بالإنترنت لا يصل الخادم إلى الجهاز، ويبقى التذكير الداخلي يعمل والتطبيق مفتوح.</li></ul>
   <h3>الخصوصية</h3>
-  <ul><li>لا حساب، ولا خادم، ولا تتبع. الإعدادات والموقع محفوظة على جهازك فقط.</li>
+  <ul><li>لا حساب، ولا تتبع. الإعدادات والموقع محفوظة على جهازك فقط.</li>
+  <li>لإيصال التنبيهات والتطبيق مغلق يحفظ خادم التنبيهات عنوان الإشعارات الخاص بجهازك وأوقات التنبيهات ونصوصها فقط — دون موقعك — ويحذفها تلقائيًا.</li>
   <li>يُطلب إذن الموقع لحساب المواقيت، وإذن الإشعارات للتنبيه — ولا شيء غيرهما.</li></ul>
   <h3>التثبيت والمشاركة</h3>
   <ul><li><b>Android (Chrome):</b> زر «تثبيت» أعلى الشاشة، أو قائمة المتصفح ← «تثبيت التطبيق».</li>
@@ -423,14 +475,15 @@ function renderAbout() {
   <p class="muted">Verification: matched the Manhaj platform in 24 cases (Makkah, Riyadh, Jeddah, Madinah, Dammam, Abha, Tabuk and 17 international cases) on 17 Nov 2026 with zero differences. Current method: ${esc(method)}.</p>
   <p class="muted">Note: Manhaj does not publish future days, so its Ramadan behaviour is not yet verified; “Isha 2 hours after Maghrib in Ramadan” is available in Settings and off by default. Times marked ≈ are high-latitude estimates.</p>
   <h3>Notifications — what to know</h3>
-  <ul><li>Reminders are planned 7 days ahead; each one fires at most once.</li>
-  <li><b>Windows / macOS:</b> install from Chrome or Edge; the window may be minimised. To keep working after a reboot, enable “Start app when you sign in” in the browser's app settings.</li>
-  <li><b>Android:</b> alerts arrive while the app is open or in the background. If the system fully closes it, web apps cannot schedule local notifications — a browser limitation.</li>
-  <li><b>iPhone / iPad (iOS 16.4+):</b> “Add to Home Screen” first. iOS suspends web apps in the background, so alerts are reliable only while the app is open.</li>
-  <li>When reopened, a missed alert is still shown if it is at most 10 minutes late; otherwise it is skipped.</li>
-  <li>While the app is hidden the system notification sound is used, so Do-Not-Disturb is respected.</li></ul>
+  <ul><li>Alerts are delivered through your device's own notification service (Web Push), so they arrive on time even when the app is closed or the phone is locked.</li>
+  <li>The next 30 days are scheduled and renewed whenever you open the app; if the schedule is about to run out you get a reminder to open it. Each alert is sent once.</li>
+  <li><b>iPhone / iPad (iOS 16.4+):</b> add the app to the Home Screen and open it from its icon, then enable notifications.</li>
+  <li><b>Windows / macOS:</b> alerts arrive while Chrome or Edge is running (even with the app window closed). Enable “Continue running background apps” in the browser settings.</li>
+  <li><b>Android:</b> alerts arrive with the app closed; excluding the browser from battery optimisation improves timeliness.</li>
+  <li>Without internet the server cannot reach the device; the in-app reminder still works while the app is open.</li></ul>
   <h3>Privacy</h3>
-  <ul><li>No account, no server, no tracking. Settings and location stay on your device.</li>
+  <ul><li>No account, no tracking. Settings and location stay on your device.</li>
+  <li>For alerts while the app is closed, the notification server stores only this device's push address and the alert times and texts — never your location — and deletes them automatically.</li>
   <li>Only location (to calculate) and notification (to alert) permissions are requested.</li></ul>
   <h3>Install &amp; share</h3>
   <ul><li><b>Android (Chrome):</b> the Install button at the top, or browser menu → Install app.</li>
@@ -513,6 +566,10 @@ function boot() {
     }).catch(e => console.warn('SW', e));
     let reloaded = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => { if (!reloaded) { reloaded = true; location.reload(); } });
+    // a push arrived while the app is open: the system notification is already shown; mirror it in-app
+    navigator.serviceWorker.addEventListener('message', ev => {
+      if (ev.data && ev.data.type === 'mq-push' && document.visibilityState === 'visible') toast(ev.data.title);
+    });
   }
 
   route();
