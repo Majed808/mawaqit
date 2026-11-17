@@ -17,3 +17,7 @@ CREATE TABLE IF NOT EXISTS events (
 );
 CREATE INDEX IF NOT EXISTS events_at ON events (at);
 CREATE INDEX IF NOT EXISTS subs_horizon ON subs (nudged, horizon);
+CREATE TABLE IF NOT EXISTS sendlog (  -- 7-day delivery log for diagnosing late alerts
+  sent_at INTEGER NOT NULL, due_at INTEGER NOT NULL, sub TEXT NOT NULL, tag TEXT NOT NULL,
+  status INTEGER NOT NULL, reason TEXT NOT NULL DEFAULT ''
+);

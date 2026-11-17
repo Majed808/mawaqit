@@ -64,7 +64,10 @@ export async function vapidAuth(endpoint, privateJwk, publicB64, subject) {
 }
 
 /** Send one push message. Returns the HTTP status. */
-export async function sendPush(sub, payload, { privateJwk, publicKey, subject, ttl = 900, urgency = 'high', topic }) {
+export async function sendPush(sub, payload, opts) { return (await sendPushRes(sub, payload, opts)).status; }
+
+/** Send one push message. Returns the push service's Response (status + reason body). */
+export async function sendPushRes(sub, payload, { privateJwk, publicKey, subject, ttl = 900, urgency = 'high', topic }) {
   const body = await encryptPayload(payload, sub.p256dh, sub.auth);
   const headers = {
     'Content-Encoding': 'aes128gcm', 'Content-Type': 'application/octet-stream',
@@ -72,8 +75,7 @@ export async function sendPush(sub, payload, { privateJwk, publicKey, subject, t
     Authorization: await vapidAuth(sub.endpoint, privateJwk, publicKey, subject),
   };
   if (topic) headers.Topic = topic;
-  const res = await fetch(sub.endpoint, { method: 'POST', headers, body });
-  return res.status;
+  return fetch(sub.endpoint, { method: 'POST', headers, body });
 }
 
 /** One-off helper: new VAPID key pair. */

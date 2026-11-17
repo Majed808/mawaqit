@@ -1,7 +1,7 @@
 // Mawaqit push relay — Cloudflare Worker + D1 + 1-minute cron.
 // Stores ONLY: the browser's push endpoint/keys, and the alert times + texts the app computed on the device.
 // No coordinates, no account, no analytics.
-import { sendPush } from './webpush.js';
+import { sendPush, sendPushRes } from './webpush.js';
 
 const PUSH_HOSTS = [/^fcm\.googleapis\.com$/, /^android\.googleapis\.com$/, /(^|\.)push\.apple\.com$/,
   /(^|\.)notify\.windows\.com$/, /^updates\.push\.services\.mozilla\.com$/, /(^|\.)push\.services\.mozilla\.com$/];
@@ -89,20 +89,27 @@ export async function dispatch(env, now = Date.now()) {
   }
   const keys = vapid(env);
   let sent = 0, stale = 0, failed = 0;
-  const gone = new Set();
+  const gone = new Set(), log = [];
+  const note = (ev, status, reason = '') => log.push([Date.now(), ev.at, ev.sub_id.slice(0, 8), ev.tag.replace(/^\d{4}-/, ''), status, reason.slice(0, 120)]);
   const jobs = results.map(ev => async () => {
     const sub = subs.get(ev.sub_id);
     if (!sub || gone.has(ev.sub_id)) return;
-    if (ev.at < now - LATE) { stale++; return; }                 // relay was down too long — don't alert late
+    if (ev.at < now - LATE) { stale++; note(ev, 0, 'stale'); return; }   // relay was down too long — don't alert late
     const ttl = Math.max(60, Math.round((ev.at + LATE - now) / 1000));
     try {
-      const status = await sendPush(sub, ev.payload, { ...keys, ttl, urgency: 'high' });
+      const res = await sendPushRes(sub, ev.payload, { ...keys, ttl, urgency: 'high' });
+      const status = res.status, reason = status >= 300 ? await res.text().catch(() => '') : '';
+      note(ev, status, reason);
       if (status === 404 || status === 410) { gone.add(ev.sub_id); await dropSub(env, ev.sub_id); }
       else if (status >= 200 && status < 300) sent++;
-      else { failed++; console.warn('push status', status, new URL(sub.endpoint).host); }
-    } catch (e) { failed++; console.warn('push error', String(e)); }
+      else { failed++; console.warn('push status', status, new URL(sub.endpoint).host, reason); }
+    } catch (e) { failed++; note(ev, -1, String(e)); console.warn('push error', String(e)); }
   });
   for (let i = 0; i < jobs.length; i += 25) await Promise.all(jobs.slice(i, i + 25).map(j => j()));
+  // Delivery log (no texts, no endpoints): when each alert went out and what the push service answered.
+  for (let i = 0; i < log.length; i += 15)
+    await env.DB.prepare(`INSERT INTO sendlog (sent_at, due_at, sub, tag, status, reason) VALUES ${log.slice(i, i + 15).map(() => '(?,?,?,?,?,?)').join(',')}`)
+      .bind(...log.slice(i, i + 15).flat()).run().catch(() => {});
   return { sent, stale, failed, gone: gone.size };
 }
 
@@ -121,6 +128,7 @@ export async function housekeeping(env, now = Date.now()) {
   }
   const old = await env.DB.prepare('SELECT id FROM subs WHERE synced_at < ?').bind(now - 60 * 864e5).all();
   for (const r of old.results) await dropSub(env, r.id);
+  await env.DB.prepare('DELETE FROM sendlog WHERE sent_at < ?').bind(now - 7 * 864e5).run().catch(() => {});
 }
 
 export default {
