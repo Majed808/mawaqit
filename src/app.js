@@ -49,6 +49,16 @@ const fmtHijri = d => { try { return new Intl.DateTimeFormat(`${L.locale}-u-ca-i
 const fmtDate = d => new Intl.DateTimeFormat(`${L.locale}-u-ca-gregory-nu-latn`, { dateStyle: 'medium', timeStyle: 'short' }).format(d);
 const pname = (p, friday) => L.prayers[friday && p === 'dhuhr' ? 'jumuah' : p];
 const two = n => String(n).padStart(2, '0');
+// Arabic-Indic digits in the Arabic interface (data such as time-zone values stay untouched)
+const DIG = '٠١٢٣٤٥٦٧٨٩';
+const num = s => LK === 'ar' ? String(s).replace(/(\d)\.(\d)/g, '$1٫$2').replace(/[0-9]/g, d => DIG[d]) : String(s);
+function arabize(root) {
+  if (LK !== 'ar' || !root) return;
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode: n => n.parentElement && n.parentElement.closest('#tzIn,script,style') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT,
+  });
+  for (let n; (n = w.nextNode());) if (/[0-9]/.test(n.data)) n.data = num(n.data);
+}
 const cityName = c => (c && (c[LK] || c.en)) || '';
 function placeName() {
   const l = loc();
@@ -120,6 +130,7 @@ function renderHome() {
     renderFoot(v);
   }
   renderStatus();
+  arabize($('home'));
 }
 
 function renderEmpty() {
@@ -137,6 +148,7 @@ function renderEmpty() {
     $('foot').textContent = ''; $('alert').hidden = true;
   }
   renderStatus();
+  arabize($('home'));
 }
 
 function renderFoot(v) {
@@ -177,6 +189,7 @@ async function enableNotifications() {
 }
 
 async function show(title, body, tag, at) {
+  title = num(title); body = num(body);
   const visible = document.visibilityState === 'visible';
   const played = S.sound && visible ? chime(S.volume) : false;
   // While hidden we rely on the OS notification sound, which honours Do-Not-Disturb.
@@ -302,6 +315,7 @@ function renderSettings() {
     </div>
   </div></div>`;
   if (manual) renderCities();
+  arabize($('settingsBody'));
 }
 
 function renderCities() {
@@ -422,6 +436,7 @@ function renderAbout() {
   <li><b>iPhone (Safari):</b> Share → Add to Home Screen.</li>
   <li><b>Windows / macOS (Chrome or Edge):</b> the install icon in the address bar.</li></ul>
   ${btns}${author}<p class="muted">Version ${VERSION}</p>`;
+  arabize($('aboutBody'));
 }
 
 // ---------- install / share ----------
@@ -443,7 +458,7 @@ async function doShare() {
 let toastTimer;
 function toast(msg, ms = 3500, action) {
   const t = $('toast');
-  t.innerHTML = `<span>${esc(msg)}</span>${action ? `<button type="button" data-act="${action.act}">${esc(action.label)}</button>` : ''}`;
+  t.innerHTML = `<span>${esc(num(msg))}</span>${action ? `<button type="button" data-act="${action.act}">${esc(action.label)}</button>` : ''}`;
   t.hidden = false; clearTimeout(toastTimer);
   if (ms) toastTimer = setTimeout(hideToast, ms);
 }
