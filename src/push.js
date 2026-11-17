@@ -12,12 +12,29 @@ export const pushSupported = () => 'serviceWorker' in navigator && 'PushManager'
 export function pushState() { try { return JSON.parse(localStorage.getItem(STATE) || '{}'); } catch { return {}; } }
 function setState(s) { try { localStorage.setItem(STATE, JSON.stringify(s)); } catch { /* ignore */ } }
 
+const subOpts = () => ({ userVisibleOnly: true, applicationServerKey: b64uToBytes(PUSH.publicKey) });
+const errText = e => (e && e.name && e.name !== 'Error' ? e.name + ': ' : '') + (e && e.message || String(e));
+
+// Resolved registration, kept so a tap handler can call subscribe() synchronously.
+let swReg = null;
+if ('serviceWorker' in navigator) navigator.serviceWorker.ready.then(r => { swReg = r; }, () => {});
+
+/** Call synchronously inside a tap handler (before any await): Safari on iOS only lets a
+ *  page subscribe to push from a user gesture, and rejects calls made later from timers. */
+export function subscribeInGesture() {
+  if (!pushConfigured() || !pushSupported() || !swReg) return Promise.resolve(null);
+  return swReg.pushManager.subscribe(subOpts()).catch(e => {
+    setState({ ...pushState(), ok: false, err: errText(e), failedAt: Date.now() });
+    return null;
+  });
+}
+
 async function subscription(create) {
   const reg = await navigator.serviceWorker.ready;
   let sub = await reg.pushManager.getSubscription();
   const k = sub && sub.options && sub.options.applicationServerKey;
   if (sub && k && bytesToB64u(k) !== PUSH.publicKey) { await sub.unsubscribe(); sub = null; }   // server key rotated
-  if (!sub && create) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64uToBytes(PUSH.publicKey) });
+  if (!sub && create) sub = await reg.pushManager.subscribe(subOpts());
   return sub;
 }
 
@@ -36,7 +53,7 @@ export async function syncPush(events, lang, hash, force = false) {
     const ns = { ok: true, at: Date.now(), hash, horizon: r.horizon, count: r.count };
     setState(ns); return ns;
   } catch (e) {
-    const ns = { ...st, ok: false, err: String(e && e.message || e), failedAt: Date.now() };
+    const ns = { ...st, ok: false, err: errText(e), failedAt: Date.now() };
     setState(ns); return ns;
   }
 }

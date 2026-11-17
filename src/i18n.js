@@ -26,7 +26,7 @@ const ar = {
   nAfter: (p, n) => `مضى على وقت أذان صلاة ${p} ${n}`,
   nBefore: (p, n) => `بقي على أذان صلاة ${p} ${n}`,
   nIqamaTitle: p => `حان وقت إقامة صلاة ${p}`, nIqamaBody: (p, n) => `مضى على الأذان ${n}`,
-  nTest: 'هذا إشعار تجريبي من مواقيت', nTzChanged: 'تغيّرت المنطقة الزمنية، وتم تحديث المواقيت',
+  nTest: 'هذا إشعار تجريبي من مواقيت', nTestBg: 'إشعار تجريبي من الخادم: التنبيهات تصلك والتطبيق مغلق', nTestBgHint: 'أغلق التطبيق الآن؛ سيصلك إشعار تجريبي من الخادم خلال دقيقة',nTzChanged: 'تغيّرت المنطقة الزمنية، وتم تحديث المواقيت',
   // states
   locating: 'جارٍ تحديد الموقع…', locFail: 'تعذّر تحديد الموقع. اختر مدينتك يدويًا.', locDenied: 'تم رفض إذن الموقع. اختر مدينتك يدويًا.',
   noLocation: 'اختر موقعك لعرض المواقيت', chooseCity: 'اختيار المدينة', myLocation: 'موقعي الحالي', near: 'قرب',
@@ -72,7 +72,7 @@ const en = {
   nAfter: (p, n) => `${n} have passed since the ${p} Adhan`,
   nBefore: (p, n) => `${n} until the ${p} Adhan`,
   nIqamaTitle: p => `${p} Iqama time`, nIqamaBody: (p, n) => `${n} since the Adhan`,
-  nTest: 'This is a test notification from Mawaqit', nTzChanged: 'Time zone changed — prayer times updated',
+  nTest: 'This is a test notification from Mawaqit', nTestBg: 'Server test: alerts reach you while the app is closed', nTestBgHint: 'Close the app now — a test alert from the server will arrive within a minute',nTzChanged: 'Time zone changed — prayer times updated',
   locating: 'Locating…', locFail: 'Could not get your location. Please choose your city.', locDenied: 'Location permission denied. Please choose your city.',
   noLocation: 'Choose your location to see prayer times', chooseCity: 'Choose city', myLocation: 'My location', near: 'near',
   lastUpdate: 'Location updated', stale: 'Location has not been updated for a long time', estimated: 'Estimated (high latitude)',

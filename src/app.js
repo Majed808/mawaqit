@@ -4,7 +4,7 @@ import { CITIES, nearestCity, distanceKm } from './cities.js';
 import { dayTimes, ymdIn, buildEvents, Runner, clearLedger } from './scheduler.js';
 import { chime, unlockAudio } from './sound.js';
 import { AUTHOR } from './author.js';
-import { pushConfigured, pushSupported, pushState, pushActive, syncPush, stopPush } from './push.js';
+import { pushConfigured, pushSupported, pushState, pushActive, syncPush, stopPush, subscribeInGesture } from './push.js';
 
 const VERSION = '1.0.0';
 const $ = id => document.getElementById(id);
@@ -183,11 +183,14 @@ async function enableNotifications() {
   unlockAudio();
   if (!('Notification' in window)) { toast(L.notifUnsupported); return false; }
   let perm = Notification.permission;
+  // Subscribe first, still inside the tap (iOS requirement); on most platforms this also asks for permission.
+  const subP = S.bg && perm !== 'denied' && bgMode() === 'ok' ? subscribeInGesture() : null;
+  if (subP) { await subP; perm = Notification.permission; }
   if (perm === 'default') perm = await Notification.requestPermission();
   S.notify = perm === 'granted';
   persist();
   if (perm === 'denied') toast(L.notifBlocked);
-  if (S.notify) syncNow(true);
+  if (S.notify) await syncNow(true);
   return S.notify;
 }
 
@@ -200,19 +203,21 @@ function bgMode() {
   if (!pushSupported()) return isIOS() && !isStandalone() ? 'ios' : 'unsupported';
   return 'ok';
 }
-async function syncNow(force) {
-  if (pushBusy || bgMode() !== 'ok' || notifState() !== 'on' || !S.bg || !S.loc) return;
+async function syncNow(force, extra = []) {
+  if (pushBusy || bgMode() !== 'ok' || notifState() !== 'on' || !S.bg || !S.loc) return null;
   pushBusy = true;
+  let st;
   try {
     const now = Date.now();
     const events = buildEvents(S.loc, S, now, 30).filter(e => e.at > now - 30e3).map(e => {
       const t = eventText(e, false);
       return { at: e.at, tag: e.id, title: num(t.title), body: num(t.body), silent: !S.sound };
     });
-    await syncPush(events, LK, pushHash(), force);
+    st = await syncPush(events.concat(extra), LK, pushHash(), force);
   } finally { pushBusy = false; }
   renderStatus();
   renderPushLine();
+  return st;
 }
 function pushLineText() {
   const m = bgMode();
@@ -222,7 +227,7 @@ function pushLineText() {
   if (!S.bg || notifState() !== 'on') return L.sBgWhy;
   const st = pushState();
   if (st.ok) return `${L.sBgOk} ${fmtDate(new Date(st.at))}`;
-  if (st.err) return L.sBgErr;
+  if (st.err) return `${L.sBgErr} (${st.err})`;
   return L.sBgPending;
 }
 function renderPushLine() { const el = $('pushLine'); if (el) el.textContent = num(pushLineText()); }
@@ -388,7 +393,7 @@ async function onSettingsChange(e) {
   }
   if (k === 'bg') {
     S.bg = val; save(S);
-    if (val) { renderPushLine(); await syncNow(true); } else { await stopPush(); renderPushLine(); renderStatus(); }
+    if (val) { const p = subscribeInGesture(); renderPushLine(); await p; await syncNow(true); } else { await stopPush(); renderPushLine(); renderStatus(); }
     return;
   }
   setPath(S, k, val);
@@ -419,9 +424,18 @@ async function onAction(e) {
       renderSettings(); break;
     }
     case 'test-sound': chime(S.volume); break;
-    case 'test-notif':
-      if (notifState() === 'on' || await enableNotifications()) show(L.appName, L.nTest, 'test-' + Date.now());
+    case 'test-notif': {
+      const p = notifState() === 'on' && S.bg ? subscribeInGesture() : null;   // keep inside the tap (iOS)
+      if (notifState() === 'on' || await enableNotifications()) {
+        show(L.appName, L.nTest, 'test-' + Date.now());
+        if (p) await p;
+        // Also queue one alert on the server ~20 s out, so delivery with the app closed can be checked.
+        const now = Date.now();
+        const st = await syncNow(true, [{ at: now + 20e3, tag: 'test-' + now, title: num(L.appName), body: num(L.nTestBg), silent: !S.sound }]);
+        if (st && st.ok) toast(L.nTestBgHint);
+      }
       renderSettings(); break;
+    }
     case 'reset': if (confirm(L.sConfirmReset)) { S = resetSettings(S.loc); applyLang(); persist(); renderSettings(); } break;
     case 'reset-loc': S.loc = null; locMode = 'manual'; clearLedger(); stopPush(); persist(); location.hash = ''; break;
     case 'install': doInstall(); break;
