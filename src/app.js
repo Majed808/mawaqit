@@ -365,7 +365,7 @@ function renderAbout() {
   const btns = `<div class="btns" style="padding:8px 0"><button class="btn" type="button" data-act="share"><svg class="ic"><use href="#i-share"/></svg>${L.share}</button>
     ${installEvt || (isIOS() && !isStandalone()) ? `<button class="btn ghost" type="button" data-act="install"><svg class="ic"><use href="#i-install"/></svg>${L.install}</button>` : ''}</div>`;
   const aName = esc(LK === 'ar' ? AUTHOR.ar : AUTHOR.en);
-  const author = `<div class="card author"><span class="av">${esc(aName.charAt(0))}</span><div><b>${aName}</b>${AUTHOR.email ? `<br><a href="mailto:${esc(AUTHOR.email)}">${esc(AUTHOR.email)}</a>` : ''}</div></div>`;
+  const author = `<p class="author-line">${aName}${AUTHOR.email ? ` | <a href="mailto:${esc(AUTHOR.email)}" dir="ltr">${esc(AUTHOR.email)}</a>` : ''}</p>`;
   $('aboutBody').innerHTML = LK === 'ar' ? `
   <p><b>مواقيت</b> أداة خفيفة ومستقلة للتذكير بمواقيت الصلاة والإقامة، تعمل على الجوال والكمبيوتر دون حساب، ودون إنترنت بعد التثبيت.</p>
   <h3>مصدر المواقيت وطريقة الحساب</h3>
@@ -390,7 +390,7 @@ function renderAbout() {
   <ul><li><b>Android (Chrome):</b> زر «تثبيت» أعلى الشاشة، أو قائمة المتصفح ← «تثبيت التطبيق».</li>
   <li><b>iPhone (Safari):</b> زر المشاركة ← «إضافة إلى الشاشة الرئيسية».</li>
   <li><b>Windows / macOS (Chrome أو Edge):</b> أيقونة التثبيت في شريط العنوان.</li></ul>
-  ${btns}<h3>إعداد</h3>${author}<p class="muted">الإصدار ${VERSION}</p>`
+  ${btns}${author}<p class="muted">الإصدار ${VERSION}</p>`
   : `
   <p><b>Mawaqit</b> is a small, standalone prayer &amp; iqama reminder for phones and computers — no account, works offline once installed.</p>
   <h3>Source &amp; calculation</h3>
@@ -415,7 +415,7 @@ function renderAbout() {
   <ul><li><b>Android (Chrome):</b> the Install button at the top, or browser menu → Install app.</li>
   <li><b>iPhone (Safari):</b> Share → Add to Home Screen.</li>
   <li><b>Windows / macOS (Chrome or Edge):</b> the install icon in the address bar.</li></ul>
-  ${btns}<h3>Made by</h3>${author}<p class="muted">Version ${VERSION}</p>`;
+  ${btns}${author}<p class="muted">Version ${VERSION}</p>`;
 }
 
 // ---------- install / share ----------

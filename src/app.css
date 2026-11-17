@@ -148,6 +148,7 @@ input[type=range]{width:140px;accent-color:var(--brand)}
 .prose table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
 .prose td,.prose th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:start}
 .prose a{color:var(--brand)}
+.author-line{margin:22px 0 4px;font-weight:600}
 .author{display:flex;align-items:center;gap:12px;padding:14px;margin-top:6px}
 .author .av{width:44px;height:44px;border-radius:50%;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;font-weight:700}
 

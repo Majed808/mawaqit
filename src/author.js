@@ -2,5 +2,5 @@
 export const AUTHOR = {
   ar: 'ماجد العصيمي',
   en: 'Majed Alosaimi',
-  email: '',
+  email: 'alosaimimajed@gmail.com',
 };
