@@ -8,10 +8,10 @@ crons = ["* * * * *"]
 [[d1_databases]]
 binding = "DB"
 database_name = "mawaqit-push"
-database_id = "REPLACE_WITH_D1_ID"
+database_id = "1cc47295-c6c0-4a00-a145-2a531547fa6f"
 
 [vars]
 ALLOWED_ORIGINS = "https://majed808.github.io,http://localhost:5173,http://localhost:5174"
 VAPID_SUBJECT = "https://majed808.github.io/mawaqit/"
-VAPID_PUBLIC_KEY = "REPLACE_WITH_VAPID_PUBLIC_KEY"
+VAPID_PUBLIC_KEY = "BPM5Y39ErcxUqRTxeMqO77s53N0Q7hvh-fuK6Y33QIOAtsAUIseSn28bdFOG8hQq_iP_pflDMAnd6n175ocyJU0"
 # secret (not in this file): VAPID_PRIVATE_JWK  →  npx wrangler secret put VAPID_PRIVATE_JWK
