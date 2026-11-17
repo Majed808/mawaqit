@@ -1,6 +1,6 @@
 // Translations. To add a language: copy the `en` block, translate, and add it to LANGS.
 const ar = {
-  dir: 'rtl', locale: 'ar-SA',
+  dir: 'rtl', locale: 'ar-SA', am: 'صباحًا', pm: 'مساءً',
   appName: 'مواقيت', appTagline: 'تذكير بمواقيت الصلاة والإقامة',
   prayers: { fajr: 'الفجر', sunrise: 'الشروق', dhuhr: 'الظهر', jumuah: 'الجمعة', asr: 'العصر', maghrib: 'المغرب', isha: 'العشاء' },
   next: 'الصلاة القادمة', remaining: 'المتبقي', iqama: 'الإقامة', after: 'بعد', min: 'د',

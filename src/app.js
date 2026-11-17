@@ -37,7 +37,13 @@ function applyLang() {
 // ---------- formatting ----------
 const loc = () => S.loc;
 const tz = () => (S.loc && S.loc.tz) || deviceTz();
-const fmtTime = d => d ? new Intl.DateTimeFormat(`${L.locale}-u-nu-latn`, { timeZone: tz(), hour: 'numeric', minute: '2-digit', hour12: true }).format(d) : '—';
+const fmtTime = d => {
+  if (!d) return '—';
+  const parts = new Intl.DateTimeFormat(`${L.locale}-u-nu-latn`, { timeZone: tz(), hour: 'numeric', minute: '2-digit', hour12: true }).formatToParts(d);
+  if (!L.am) return parts.map(p => p.value).join('');
+  const h = +new Intl.DateTimeFormat('en-US', { timeZone: tz(), hour: 'numeric', hourCycle: 'h23' }).format(d);
+  return parts.map(p => p.type === 'dayPeriod' ? (h < 12 ? L.am : L.pm) : p.value).join('');
+};
 const fmtGreg = d => new Intl.DateTimeFormat(`${L.locale}-u-ca-gregory-nu-latn`, { timeZone: tz(), weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(d);
 const fmtHijri = d => { try { return new Intl.DateTimeFormat(`${L.locale}-u-ca-islamic-umalqura-nu-latn`, { timeZone: tz(), day: 'numeric', month: 'long', year: 'numeric' }).format(d); } catch { return ''; } };
 const fmtDate = d => new Intl.DateTimeFormat(`${L.locale}-u-ca-gregory-nu-latn`, { dateStyle: 'medium', timeStyle: 'short' }).format(d);
